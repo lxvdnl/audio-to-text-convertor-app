@@ -1,6 +1,6 @@
 set(mainWindowFiles
     mainwindow.cpp
-    mainwindow.h
+    mainwindow.hpp
     mainwindow.ui
 )
 add_library(mainWindow ${mainWindowFiles})
