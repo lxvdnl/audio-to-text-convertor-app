@@ -4,15 +4,18 @@
 #pragma once
 
 #include <Windows.h>
+#include <atomic>
 #include <audioclient.h>
-#include <ctime>
+#include <chrono>
+#include <iostream>
 #include <mmdeviceapi.h>
 #include <mmsystem.h>
 #include <string>
+#include <thread>
 
 #define REFTIMES_PER_SEC 10000000
 #define REFTIMES_PER_MILLISEC 10000
-#define MAX_RECORDING_TIME_SEC 30
+#define MAX_RECORDING_TIME_SEC 18000
 
 #define EXIT_ON_ERROR(hres) \
     if (FAILED(hres)) { \
@@ -26,7 +29,7 @@
 
 class audioStreamRecording
 {
-    BOOL stopRecording;
+    std::atomic<bool> stopRecording;
     HMMIO audioRecordingFile;
 
     const CLSID CLSID_MMDeviceEnumerator;

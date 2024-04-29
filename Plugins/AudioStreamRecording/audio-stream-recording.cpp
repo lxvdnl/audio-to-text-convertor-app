@@ -1,5 +1,4 @@
 #include "audio-stream-recording.hpp"
-#include <iostream>
 
 audioStreamRecording::audioStreamRecording(std::string filePath)
     : pMySink(nullptr)
@@ -16,16 +15,8 @@ audioStreamRecording::audioStreamRecording(std::string filePath)
     MultiByteToWideChar(CP_UTF8, 0, filePath.c_str(), -1, fileName, size_needed);
     fileName[size_needed] = L'\0';
 
-    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
-    if (FAILED(hr)) {
-        std::cerr << "CoInitializeEx failed with HRESULT: 0x" << std::hex << hr << std::endl;
-        delete[] fileName;
-        return;
-    }
     MMIOINFO mi = {0};
     audioRecordingFile = mmioOpenW((LPWSTR) fileName, &mi, MMIO_WRITE | MMIO_CREATE);
-
     delete[] fileName;
     pMySink = new MyAudioSink;
 }
@@ -55,9 +46,6 @@ HRESULT audioStreamRecording::MyAudioSink::CopyData(BYTE* pData,
                                    reinterpret_cast<PCHAR>(pData),
                                    lBytesToWrite);
 
-    static int CallCount = 0;
-    std::cout << "CallCount = " << CallCount++ << "NumFrames: " << NumFrames << std::endl;
-
     return S_OK;
 }
 
@@ -81,23 +69,41 @@ HRESULT audioStreamRecording::Record()
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
 
-    time_t timerStart = time(nullptr);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (FAILED(hr)) {
+        std::cerr << "CoInitializeEx failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        return hr;
+    }
 
     hr = CoCreateInstance(CLSID_MMDeviceEnumerator,
                           NULL,
                           CLSCTX_ALL,
                           IID_IMMDeviceEnumerator,
                           (void**) &pEnumerator);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "CoCreateInstance failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        return hr;
+    }
 
     hr = pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pEnumerator->GetDefaultAudioEndpoint failed with HRESULT: 0x" << std::hex
+                  << hr << std::endl;
+        return hr;
+    }
 
     hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**) &pAudioClient);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pDevice->Activate failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        return hr;
+    }
 
     hr = pAudioClient->GetMixFormat(&pwfx);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pAudioClient->GetMixFormat failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
+        return hr;
+    }
 
     hr = pAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
                                   AUDCLNT_STREAMFLAGS_LOOPBACK,
@@ -105,57 +111,103 @@ HRESULT audioStreamRecording::Record()
                                   0,
                                   pwfx,
                                   NULL);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pAudioClient->Initialize failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
+        return hr;
+    }
 
     hr = pAudioClient->GetBufferSize(&bufferFrameCount);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pAudioClient->GetBufferSize failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
+        return hr;
+    }
 
     hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**) &pCaptureClient);
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pAudioClient->GetService failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
+        return hr;
+    }
 
     hr = WriteWaveHeader(pwfx, &ckRIFF, &ckData);
     if (FAILED(hr)) {
+        std::cerr << "WriteWaveHeader failed with HRESULT: 0x" << std::hex << hr << std::endl;
         return hr;
     }
 
     hnsActualDuration = (double) REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
     hr = pAudioClient->Start();
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pAudioClient->Start failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        return hr;
+    }
+
+    auto start = std::chrono::steady_clock::now();
+
+    std::cout << "Recording...\n";
 
     while (!stopRecording) {
         Sleep(hnsActualDuration / REFTIMES_PER_MILLISEC / 2);
 
         hr = pCaptureClient->GetNextPacketSize(&packetLength);
-        EXIT_ON_ERROR(hr)
+        if (FAILED(hr)) {
+            std::cerr << "pCaptureClient->GetNextPacketSize failed with HRESULT: 0x" << std::hex
+                      << hr << std::endl;
+            return hr;
+        }
 
         while (packetLength) {
             hr = pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, NULL, NULL);
-            EXIT_ON_ERROR(hr)
+            if (FAILED(hr)) {
+                std::cerr << "pCaptureClient->GetBuffer failed with HRESULT: 0x" << std::hex << hr
+                          << std::endl;
+                return hr;
+            }
 
             if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
                 pData = NULL;
             }
 
             hr = pMySink->CopyData(pData, numFramesAvailable, pwfx, (HMMIO) audioRecordingFile);
-            EXIT_ON_ERROR(hr)
+            if (FAILED(hr)) {
+                std::cerr << "pMySink->CopyData failed with HRESULT: 0x" << std::hex << hr
+                          << std::endl;
+                return hr;
+            }
 
             hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
-            EXIT_ON_ERROR(hr)
+            if (FAILED(hr)) {
+                std::cerr << "pCaptureClient->ReleaseBuffer failed with HRESULT: 0x" << std::hex
+                          << hr << std::endl;
+                return hr;
+            }
 
             hr = pCaptureClient->GetNextPacketSize(&packetLength);
-            EXIT_ON_ERROR(hr)
+            if (FAILED(hr)) {
+                std::cerr << "pCaptureClient->GetNextPacketSize failed with HRESULT: 0x" << std::hex
+                          << hr << std::endl;
+                return hr;
+            }
         }
-        if (time(nullptr) - timerStart > MAX_RECORDING_TIME_SEC)
+        if (std::chrono::steady_clock::now() - start > std::chrono::seconds(MAX_RECORDING_TIME_SEC))
             Stop();
     }
+    std::cout << "Recording stopped\n";
 
     hr = pAudioClient->Stop();
-    EXIT_ON_ERROR(hr)
+    if (FAILED(hr)) {
+        std::cerr << "pAudioClient->Stop failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        return hr;
+    }
 
     hr = FinishWaveFile(&ckData, &ckRIFF);
-    if (FAILED(hr))
+    if (FAILED(hr)) {
+        std::cerr << "FinishWaveFile failed with HRESULT: 0x" << std::hex << hr << std::endl;
         return hr;
+    }
 
 Exit:
     CoTaskMemFree(pwfx);

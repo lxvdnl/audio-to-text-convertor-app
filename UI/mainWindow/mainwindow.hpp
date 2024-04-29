@@ -1,8 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QCloseEvent>
 #include <QMainWindow>
+#include <QMessageBox>
 #include "../../Plugins/AudioStreamRecording/audio-stream-recording.hpp"
+#include <thread>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -18,13 +21,16 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
-    void on_startRecording_clicked();
+    void closeEvent(QCloseEvent *event);
 
-    void on_stopRecording_clicked();
+private slots:
+    void on_recordingButton_clicked();
 
 private:
     Ui::MainWindow *ui;
     audioStreamRecording *record;
+    std::thread recThread;
+    std::string fileName;
+    bool recordingInProgress;
 };
 #endif // MAINWINDOW_H

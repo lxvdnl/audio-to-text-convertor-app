@@ -6,7 +6,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    record = new audioStreamRecording("recorded-stream.wav");
+    fileName = "recorded-stream.wav";
+    record = new audioStreamRecording(fileName);
+    recordingInProgress = false;
 }
 
 MainWindow::~MainWindow()
@@ -14,12 +16,43 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_startRecording_clicked()
+void MainWindow::on_recordingButton_clicked()
 {
-    record->Record();
+    if (!recordingInProgress) {
+        ui->recordingButton->setText("Stop Recording");
+        ui->recordingButton->setStyleSheet("background-color: #f54242; color: #ffffff;");
+
+        recThread = std::thread(&audioStreamRecording::Record, record);
+        recThread.detach();
+
+        recordingInProgress = true;
+    } else {
+        record->Stop();
+
+        ui->recordingButton->setEnabled(false);
+        ui->recordingButton->setText("Audio recorded successfully");
+        ui->recordingButton->setStyleSheet("background-color: #7d7575; color: #ffffff;");
+
+        recordingInProgress = false;
+    }
 }
 
-void MainWindow::on_stopRecording_clicked()
+void MainWindow::closeEvent(QCloseEvent *event)
 {
-    record->Stop();
+    if (recordingInProgress) {
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this,
+                                      "Recording in Progress",
+                                      "Recording is still in progress. Do you want to stop "
+                                      "recording and close the application?",
+                                      QMessageBox::Yes | QMessageBox::Cancel);
+        if (reply == QMessageBox::Yes) {
+            record->Stop();
+        } else if (reply == QMessageBox::Cancel) {
+            event->ignore();
+            return;
+        }
+    }
+
+    event->accept();
 }
