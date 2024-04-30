@@ -40,9 +40,10 @@ HRESULT audioStreamRecording::MyAudioSink::CopyData(BYTE* pData,
     }
 
     LONG lBytesToWrite = NumFrames * pwfx->nBlockAlign;
-#pragma prefast(                               \
-    suppress : __WARNING_INCORRECT_ANNOTATION, \
-    "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
+#pragma prefast(                      \
+    suppress                          \
+	: __WARNING_INCORRECT_ANNOTATION, \
+      "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
     LONG lBytesWritten = mmioWrite(
         audioRecordingFile, reinterpret_cast<PCHAR>(pData), lBytesToWrite);
 
