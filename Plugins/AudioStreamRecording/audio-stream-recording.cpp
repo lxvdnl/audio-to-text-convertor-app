@@ -62,6 +62,7 @@ HRESULT audioStreamRecording::Record()
     IAudioCaptureClient* pCaptureClient = nullptr;
     WAVEFORMATEX* pwfx = nullptr;
     UINT32 packetLength = 0;
+	
     BYTE* pData;
     DWORD flags;
 
