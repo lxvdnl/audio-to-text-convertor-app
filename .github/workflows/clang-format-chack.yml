@@ -1,12 +1,6 @@
 name: clang-format
 
-on:
-  pull_request:
-    paths:
-      - '**.c'
-      - '**.cpp'
-      - '**.h'
-      - '**.hpp'
+on: [pull_request]
 
 jobs:
   build:
