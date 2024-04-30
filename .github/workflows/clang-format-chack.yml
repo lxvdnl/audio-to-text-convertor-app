@@ -1,18 +1,18 @@
-name: clang-format
+name: Static analysis
 
 on: [pull_request]
 
 jobs:
-  build:
+  clang-format:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Install clang-format
-        run: |
-          sudo apt-get install -y clang-format
-      - name: Run clang-format
-        run: |
-          git-clang-format --diff `git merge-base ${GITHUB_SHA} ${GITHUB_BASE_REF}` ${GITHUB_SHA} 2>&1 | tee log.txt
-          exit `grep -c diff log.txt`
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Install clang-format
+      run: |
+        sudo apt-get install -y clang-format
+    - name: Run clang-format
+      run: |
+        git-clang-format --diff `git merge-base ${GITHUB_SHA} origin/${GITHUB_BASE_REF}` ${GITHUB_SHA} 2>&1 | tee log.txt
+        exit `grep -c diff log.txt`
