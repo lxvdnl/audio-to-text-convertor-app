@@ -9,16 +9,19 @@ on:
       - '**.hpp'
 
 jobs:
-  build:
+  clang-format-check:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Install clang-format
         run: |
           sudo apt-get install -y clang-format
+      - name: Get changed files
+        id: get_files
+        run: |
+          git diff --name-only HEAD^ HEAD > changed_files.txt
       - name: Run clang-format
         run: |
-          git-clang-format --diff `git merge-base ${GITHUB_SHA} origin/${GITHUB_BASE_REF}` ${GITHUB_SHA} 2>&1 | tee log.txt
-          exit `grep -c diff log.txt`
+          xargs -a changed_files.txt -d '\n' git-clang-format --style=file -verbose -diff
