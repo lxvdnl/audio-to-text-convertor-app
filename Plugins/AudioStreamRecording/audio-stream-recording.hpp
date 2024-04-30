@@ -4,12 +4,13 @@
 #pragma once
 
 #include <Windows.h>
-#include <atomic>
 #include <audioclient.h>
-#include <chrono>
-#include <iostream>
 #include <mmdeviceapi.h>
 #include <mmsystem.h>
+
+#include <atomic>
+#include <chrono>
+#include <iostream>
 #include <string>
 #include <thread>
 
@@ -18,17 +19,16 @@
 #define MAX_RECORDING_TIME_SEC 18000
 
 #define EXIT_ON_ERROR(hres) \
-    if (FAILED(hres)) { \
-        goto Exit; \
+    if (FAILED(hres)) {     \
+        goto Exit;          \
     }
 #define SAFE_RELEASE(punk) \
-    if ((punk) != NULL) { \
+    if ((punk) != NULL) {  \
         (punk)->Release(); \
-        (punk) = NULL; \
+        (punk) = NULL;     \
     }
 
-class audioStreamRecording
-{
+class audioStreamRecording {
     std::atomic<bool> stopRecording;
     HMMIO audioRecordingFile;
 
@@ -37,20 +37,18 @@ class audioStreamRecording
     const IID IID_IAudioClient;
     const IID IID_IAudioCaptureClient;
 
-    class MyAudioSink
-    {
-    public:
-        HRESULT CopyData(BYTE* pData,
-                         UINT32 NumFrames,
-                         WAVEFORMATEX* pwfx,
+    class MyAudioSink {
+       public:
+        HRESULT CopyData(BYTE* pData, UINT32 NumFrames, WAVEFORMATEX* pwfx,
                          HMMIO audioRecordingFile);
     };
     MyAudioSink* pMySink;
 
-    HRESULT WriteWaveHeader(LPCWAVEFORMATEX pwfx, MMCKINFO* pckRIFF, MMCKINFO* pckData);
+    HRESULT WriteWaveHeader(LPCWAVEFORMATEX pwfx, MMCKINFO* pckRIFF,
+                            MMCKINFO* pckData);
     HRESULT FinishWaveFile(MMCKINFO* pckRIFF, MMCKINFO* pckData);
 
-public:
+   public:
     audioStreamRecording(std::string filePath);
     ~audioStreamRecording();
 
@@ -58,4 +56,4 @@ public:
     HRESULT Stop();
 };
 
-#endif // AUDIOSTREAMRECORDING_HPP
+#endif  // AUDIOSTREAMRECORDING_HPP
