@@ -4,8 +4,9 @@
 #include <QCloseEvent>
 #include <QMainWindow>
 #include <QMessageBox>
-#include "../../Plugins/AudioStreamRecording/audio-stream-recording.hpp"
 #include <thread>
+
+#include "../../Plugins/AudioStreamRecording/audio-stream-recording.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -13,24 +14,23 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
-public:
+   public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
     void closeEvent(QCloseEvent *event);
 
-private slots:
+   private slots:
     void on_recordingButton_clicked();
 
-private:
+   private:
     Ui::MainWindow *ui;
     audioStreamRecording *record;
     std::thread recThread;
     std::string fileName;
     bool recordingInProgress;
 };
-#endif // MAINWINDOW_H
+#endif  // MAINWINDOW_H

@@ -1,28 +1,29 @@
 #include "audio-stream-recording.hpp"
 
 audioStreamRecording::audioStreamRecording(std::string filePath)
-    : pMySink(nullptr)
-    , stopRecording(false)
-    , audioRecordingFile(nullptr)
-    , CLSID_MMDeviceEnumerator(__uuidof(MMDeviceEnumerator))
-    , IID_IMMDeviceEnumerator(__uuidof(IMMDeviceEnumerator))
-    , IID_IAudioClient(__uuidof(IAudioClient))
-    , IID_IAudioCaptureClient(__uuidof(IAudioCaptureClient))
-{
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, filePath.c_str(), -1, NULL, 0);
+    : pMySink(nullptr),
+      stopRecording(false),
+      audioRecordingFile(nullptr),
+      CLSID_MMDeviceEnumerator(__uuidof(MMDeviceEnumerator)),
+      IID_IMMDeviceEnumerator(__uuidof(IMMDeviceEnumerator)),
+      IID_IAudioClient(__uuidof(IAudioClient)),
+      IID_IAudioCaptureClient(__uuidof(IAudioCaptureClient)) {
+    int size_needed =
+        MultiByteToWideChar(CP_UTF8, 0, filePath.c_str(), -1, nullptr, 0);
 
     WCHAR* fileName = new WCHAR[(size_needed + 1) * 2];
-    MultiByteToWideChar(CP_UTF8, 0, filePath.c_str(), -1, fileName, size_needed);
+    MultiByteToWideChar(CP_UTF8, 0, filePath.c_str(), -1, fileName,
+                        size_needed);
     fileName[size_needed] = L'\0';
 
     MMIOINFO mi = {0};
-    audioRecordingFile = mmioOpenW((LPWSTR) fileName, &mi, MMIO_WRITE | MMIO_CREATE);
+    audioRecordingFile =
+        mmioOpenW((LPWSTR)fileName, &mi, MMIO_WRITE | MMIO_CREATE);
     delete[] fileName;
     pMySink = new MyAudioSink;
 }
 
-audioStreamRecording::~audioStreamRecording()
-{
+audioStreamRecording::~audioStreamRecording() {
     mmioClose(audioRecordingFile, 0);
     CoUninitialize();
 }
@@ -30,8 +31,7 @@ audioStreamRecording::~audioStreamRecording()
 HRESULT audioStreamRecording::MyAudioSink::CopyData(BYTE* pData,
                                                     UINT32 NumFrames,
                                                     WAVEFORMATEX* pwfx,
-                                                    HMMIO audioRecordingFile)
-{
+                                                    HMMIO audioRecordingFile) {
     HRESULT hr = S_OK;
 
     if (!NumFrames) {
@@ -40,108 +40,110 @@ HRESULT audioStreamRecording::MyAudioSink::CopyData(BYTE* pData,
     }
 
     LONG lBytesToWrite = NumFrames * pwfx->nBlockAlign;
-#pragma prefast(suppress : __WARNING_INCORRECT_ANNOTATION, \
-                "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
-    LONG lBytesWritten = mmioWrite(audioRecordingFile,
-                                   reinterpret_cast<PCHAR>(pData),
-                                   lBytesToWrite);
+#pragma prefast(                      \
+    suppress                          \
+    : __WARNING_INCORRECT_ANNOTATION, \
+      "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
+    LONG lBytesWritten = mmioWrite(
+        audioRecordingFile, reinterpret_cast<PCHAR>(pData), lBytesToWrite);
 
     return S_OK;
 }
 
-HRESULT audioStreamRecording::Record()
-{
+HRESULT audioStreamRecording::Record() {
     HRESULT hr;
     REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
     REFERENCE_TIME hnsActualDuration;
     UINT32 bufferFrameCount;
     UINT32 numFramesAvailable;
-    IMMDeviceEnumerator* pEnumerator = NULL;
-    IMMDevice* pDevice = NULL;
-    IAudioClient* pAudioClient = NULL;
-    IAudioCaptureClient* pCaptureClient = NULL;
-    WAVEFORMATEX* pwfx = NULL;
+    IMMDeviceEnumerator* pEnumerator = nullptr;
+    IMMDevice* pDevice = nullptr;
+    IAudioClient* pAudioClient = nullptr;
+    IAudioCaptureClient* pCaptureClient = nullptr;
+    WAVEFORMATEX* pwfx = nullptr;
     UINT32 packetLength = 0;
-
     BYTE* pData;
     DWORD flags;
 
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
 
-    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(hr)) {
-        std::cerr << "CoInitializeEx failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "CoInitializeEx failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
         return hr;
     }
 
-    hr = CoCreateInstance(CLSID_MMDeviceEnumerator,
-                          NULL,
-                          CLSCTX_ALL,
-                          IID_IMMDeviceEnumerator,
-                          (void**) &pEnumerator);
+    hr = CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL,
+                          IID_IMMDeviceEnumerator, (void**)&pEnumerator);
     if (FAILED(hr)) {
-        std::cerr << "CoCreateInstance failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "CoCreateInstance failed with HRESULT: 0x" << std::hex
+                  << hr << std::endl;
         return hr;
     }
 
     hr = pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
     if (FAILED(hr)) {
-        std::cerr << "pEnumerator->GetDefaultAudioEndpoint failed with HRESULT: 0x" << std::hex
-                  << hr << std::endl;
+        std::cerr
+            << "pEnumerator->GetDefaultAudioEndpoint failed with HRESULT: 0x"
+            << std::hex << hr << std::endl;
         return hr;
     }
 
-    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**) &pAudioClient);
+    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr,
+                           (void**)&pAudioClient);
     if (FAILED(hr)) {
-        std::cerr << "pDevice->Activate failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "pDevice->Activate failed with HRESULT: 0x" << std::hex
+                  << hr << std::endl;
         return hr;
     }
 
     hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
-        std::cerr << "pAudioClient->GetMixFormat failed with HRESULT: 0x" << std::hex << hr
-                  << std::endl;
+        std::cerr << "pAudioClient->GetMixFormat failed with HRESULT: 0x"
+                  << std::hex << hr << std::endl;
         return hr;
     }
 
     hr = pAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
                                   AUDCLNT_STREAMFLAGS_LOOPBACK,
-                                  hnsRequestedDuration,
-                                  0,
-                                  pwfx,
-                                  NULL);
+                                  hnsRequestedDuration, 0, pwfx, nullptr);
     if (FAILED(hr)) {
-        std::cerr << "pAudioClient->Initialize failed with HRESULT: 0x" << std::hex << hr
-                  << std::endl;
+        std::cerr << "pAudioClient->Initialize failed with HRESULT: 0x"
+                  << std::hex << hr << std::endl;
         return hr;
     }
 
     hr = pAudioClient->GetBufferSize(&bufferFrameCount);
     if (FAILED(hr)) {
-        std::cerr << "pAudioClient->GetBufferSize failed with HRESULT: 0x" << std::hex << hr
-                  << std::endl;
+        std::cerr << "pAudioClient->GetBufferSize failed with HRESULT: 0x"
+                  << std::hex << hr << std::endl;
         return hr;
     }
 
-    hr = pAudioClient->GetService(IID_IAudioCaptureClient, (void**) &pCaptureClient);
+    hr = pAudioClient->GetService(IID_IAudioCaptureClient,
+                                  (void**)&pCaptureClient);
     if (FAILED(hr)) {
-        std::cerr << "pAudioClient->GetService failed with HRESULT: 0x" << std::hex << hr
-                  << std::endl;
+        std::cerr << "pAudioClient->GetService failed with HRESULT: 0x"
+                  << std::hex << hr << std::endl;
         return hr;
     }
 
     hr = WriteWaveHeader(pwfx, &ckRIFF, &ckData);
     if (FAILED(hr)) {
-        std::cerr << "WriteWaveHeader failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "WriteWaveHeader failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
         return hr;
     }
 
-    hnsActualDuration = (double) REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
+    hnsActualDuration =
+        (double)REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
     hr = pAudioClient->Start();
     if (FAILED(hr)) {
-        std::cerr << "pAudioClient->Start failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "pAudioClient->Start failed with HRESULT: 0x" << std::hex
+                  << hr << std::endl;
         return hr;
     }
 
@@ -154,58 +156,66 @@ HRESULT audioStreamRecording::Record()
 
         hr = pCaptureClient->GetNextPacketSize(&packetLength);
         if (FAILED(hr)) {
-            std::cerr << "pCaptureClient->GetNextPacketSize failed with HRESULT: 0x" << std::hex
-                      << hr << std::endl;
+            std::cerr
+                << "pCaptureClient->GetNextPacketSize failed with HRESULT: 0x"
+                << std::hex << hr << std::endl;
             return hr;
         }
 
         while (packetLength) {
-            hr = pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags, NULL, NULL);
+            hr = pCaptureClient->GetBuffer(&pData, &numFramesAvailable, &flags,
+                                           nullptr, nullptr);
             if (FAILED(hr)) {
-                std::cerr << "pCaptureClient->GetBuffer failed with HRESULT: 0x" << std::hex << hr
-                          << std::endl;
+                std::cerr << "pCaptureClient->GetBuffer failed with HRESULT: 0x"
+                          << std::hex << hr << std::endl;
                 return hr;
             }
 
             if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-                pData = NULL;
+                pData = nullptr;
             }
 
-            hr = pMySink->CopyData(pData, numFramesAvailable, pwfx, (HMMIO) audioRecordingFile);
+            hr = pMySink->CopyData(pData, numFramesAvailable, pwfx,
+                                   (HMMIO)audioRecordingFile);
             if (FAILED(hr)) {
-                std::cerr << "pMySink->CopyData failed with HRESULT: 0x" << std::hex << hr
-                          << std::endl;
+                std::cerr << "pMySink->CopyData failed with HRESULT: 0x"
+                          << std::hex << hr << std::endl;
                 return hr;
             }
 
             hr = pCaptureClient->ReleaseBuffer(numFramesAvailable);
             if (FAILED(hr)) {
-                std::cerr << "pCaptureClient->ReleaseBuffer failed with HRESULT: 0x" << std::hex
-                          << hr << std::endl;
+                std::cerr
+                    << "pCaptureClient->ReleaseBuffer failed with HRESULT: 0x"
+                    << std::hex << hr << std::endl;
                 return hr;
             }
 
             hr = pCaptureClient->GetNextPacketSize(&packetLength);
             if (FAILED(hr)) {
-                std::cerr << "pCaptureClient->GetNextPacketSize failed with HRESULT: 0x" << std::hex
-                          << hr << std::endl;
+                std::cerr << "pCaptureClient->GetNextPacketSize failed with "
+                             "HRESULT: 0x"
+                          << std::hex << hr << std::endl;
                 return hr;
             }
         }
-        if (std::chrono::steady_clock::now() - start > std::chrono::seconds(MAX_RECORDING_TIME_SEC))
+        if (std::chrono::steady_clock::now() - start >
+            std::chrono::seconds(MAX_RECORDING_TIME_SEC))
             Stop();
     }
     std::cout << "Recording stopped\n";
 
     hr = pAudioClient->Stop();
     if (FAILED(hr)) {
-        std::cerr << "pAudioClient->Stop failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "pAudioClient->Stop failed with HRESULT: 0x" << std::hex
+                  << hr << std::endl;
         return hr;
     }
 
     hr = FinishWaveFile(&ckData, &ckRIFF);
     if (FAILED(hr)) {
-        std::cerr << "FinishWaveFile failed with HRESULT: 0x" << std::hex << hr << std::endl;
+        std::cerr << "FinishWaveFile failed with HRESULT: 0x" << std::hex << hr
+                  << std::endl;
         return hr;
     }
 
@@ -219,16 +229,14 @@ Exit:
     return hr;
 }
 
-HRESULT audioStreamRecording::Stop()
-{
+HRESULT audioStreamRecording::Stop() {
     stopRecording = true;
     return S_OK;
 }
 
 HRESULT audioStreamRecording::WriteWaveHeader(LPCWAVEFORMATEX pwfx,
                                               MMCKINFO* pckRIFF,
-                                              MMCKINFO* pckData)
-{
+                                              MMCKINFO* pckData) {
     MMRESULT result;
 
     pckRIFF->ckid = MAKEFOURCC('R', 'I', 'F', 'F');
@@ -236,7 +244,8 @@ HRESULT audioStreamRecording::WriteWaveHeader(LPCWAVEFORMATEX pwfx,
 
     result = mmioCreateChunk(audioRecordingFile, pckRIFF, MMIO_CREATERIFF);
     if (MMSYSERR_NOERROR != result) {
-        wprintf(L"mmioCreateChunk(\"RIFF/WAVE\") failed: MMRESULT = 0x%08x", result);
+        wprintf(L"mmioCreateChunk(\"RIFF/WAVE\") failed: MMRESULT = 0x%08x",
+                result);
         return E_FAIL;
     }
 
@@ -249,13 +258,12 @@ HRESULT audioStreamRecording::WriteWaveHeader(LPCWAVEFORMATEX pwfx,
     }
 
     LONG lBytesInWfx = sizeof(WAVEFORMATEX) + pwfx->cbSize;
-    LONG lBytesWritten = mmioWrite(audioRecordingFile,
-                                   reinterpret_cast<PCHAR>(const_cast<LPWAVEFORMATEX>(pwfx)),
-                                   lBytesInWfx);
+    LONG lBytesWritten = mmioWrite(
+        audioRecordingFile,
+        reinterpret_cast<PCHAR>(const_cast<LPWAVEFORMATEX>(pwfx)), lBytesInWfx);
     if (lBytesWritten != lBytesInWfx) {
         wprintf(L"mmioWrite(fmt data) wrote %u bytes; expected %u bytes",
-                lBytesWritten,
-                lBytesInWfx);
+                lBytesWritten, lBytesInWfx);
         return E_FAIL;
     }
 
@@ -273,11 +281,11 @@ HRESULT audioStreamRecording::WriteWaveHeader(LPCWAVEFORMATEX pwfx,
     }
 
     DWORD frames = 0;
-    lBytesWritten = mmioWrite(audioRecordingFile, reinterpret_cast<PCHAR>(&frames), sizeof(frames));
+    lBytesWritten = mmioWrite(audioRecordingFile,
+                              reinterpret_cast<PCHAR>(&frames), sizeof(frames));
     if (lBytesWritten != sizeof(frames)) {
         wprintf(L"mmioWrite(fact data) wrote %u bytes; expected %u bytes",
-                lBytesWritten,
-                (UINT32) sizeof(frames));
+                lBytesWritten, (UINT32)sizeof(frames));
         return E_FAIL;
     }
 
@@ -297,8 +305,8 @@ HRESULT audioStreamRecording::WriteWaveHeader(LPCWAVEFORMATEX pwfx,
     return S_OK;
 }
 
-HRESULT audioStreamRecording::FinishWaveFile(MMCKINFO* pckRIFF, MMCKINFO* pckData)
-{
+HRESULT audioStreamRecording::FinishWaveFile(MMCKINFO* pckRIFF,
+                                             MMCKINFO* pckData) {
     MMRESULT result;
 
     result = mmioAscend(audioRecordingFile, pckData, 0);
