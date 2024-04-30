@@ -1,0 +1,24 @@
+name: clang-format
+
+on:
+  pull_request:
+    paths:
+      - '**.c'
+      - '**.cpp'
+      - '**.h'
+      - '**.hpp'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install clang-format
+        run: |
+          sudo apt-get install -y clang-format
+      - name: Run clang-format
+        run: |
+          git-clang-format --diff `git merge-base ${GITHUB_SHA} origin/${GITHUB_BASE_REF}` ${GITHUB_SHA} 2>&1 | tee log.txt
+          exit `grep -c diff log.txt`
