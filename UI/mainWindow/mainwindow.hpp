@@ -33,4 +33,5 @@ private:
     std::string fileName;
     bool recordingInProgress;
 };
+
 #endif // MAINWINDOW_H

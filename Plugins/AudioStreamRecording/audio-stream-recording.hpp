@@ -6,37 +6,22 @@
 #include <Windows.h>
 #include <atomic>
 #include <audioclient.h>
-#include <chrono>
-#include <iostream>
 #include <mmdeviceapi.h>
 #include <mmsystem.h>
 #include <string>
-#include <thread>
 
 #define REFTIMES_PER_SEC 10000000
 #define REFTIMES_PER_MILLISEC 10000
 #define MAX_RECORDING_TIME_SEC 18000
 
-#define EXIT_ON_ERROR(hres) \
-    if (FAILED(hres)) { \
-        goto Exit; \
-    }
 #define SAFE_RELEASE(punk) \
-    if ((punk) != NULL) { \
+    if ((punk) != nullptr) { \
         (punk)->Release(); \
-        (punk) = NULL; \
+        (punk) = nullptr; \
     }
 
 class audioStreamRecording
 {
-    std::atomic<bool> stopRecording;
-    HMMIO audioRecordingFile;
-
-    const CLSID CLSID_MMDeviceEnumerator;
-    const IID IID_IMMDeviceEnumerator;
-    const IID IID_IAudioClient;
-    const IID IID_IAudioCaptureClient;
-
     class MyAudioSink
     {
     public:
@@ -46,6 +31,13 @@ class audioStreamRecording
                          HMMIO audioRecordingFile);
     };
     MyAudioSink* pMySink;
+    std::atomic<bool> stopRecording;
+    HMMIO audioRecordingFile;
+
+    const CLSID CLSID_MMDeviceEnumerator;
+    const IID IID_IMMDeviceEnumerator;
+    const IID IID_IAudioClient;
+    const IID IID_IAudioCaptureClient;
 
     HRESULT WriteWaveHeader(LPCWAVEFORMATEX pwfx, MMCKINFO* pckRIFF, MMCKINFO* pckData);
     HRESULT FinishWaveFile(MMCKINFO* pckRIFF, MMCKINFO* pckData);
