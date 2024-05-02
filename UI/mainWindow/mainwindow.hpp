@@ -9,20 +9,19 @@ namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
-public:
+   public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
+   private slots:
     void on_goToTheRecordingButton_clicked();
 
-private:
+   private:
     Ui::MainWindow *ui;
     AudioStreamRecordingWindow *audiostreamrecordingwindow;
 };
 
-#endif // MAINWINDOW_HPP
+#endif  // MAINWINDOW_HPP

@@ -1,20 +1,15 @@
 #include "mainwindow.hpp"
+
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
+    : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
 }
 
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
+MainWindow::~MainWindow() { delete ui; }
 
-void MainWindow::on_goToTheRecordingButton_clicked()
-{
+void MainWindow::on_goToTheRecordingButton_clicked() {
     audiostreamrecordingwindow = new AudioStreamRecordingWindow(this);
     audiostreamrecordingwindow->show();
 }

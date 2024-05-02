@@ -3,22 +3,16 @@
 #include "ui_audiostreamrecordingwindow.h"
 
 AudioStreamRecordingWindow::AudioStreamRecordingWindow(QWidget *parent)
-    : QDialog(parent)
-    , ui(new Ui::AudioStreamRecordingWindow)
-{
+    : QDialog(parent), ui(new Ui::AudioStreamRecordingWindow) {
     ui->setupUi(this);
     fileName = "recorded-stream.wav";
     record = new audioStreamRecordingWin(fileName);
     recordingInProgress = false;
 }
 
-AudioStreamRecordingWindow::~AudioStreamRecordingWindow()
-{
-    delete ui;
-}
+AudioStreamRecordingWindow::~AudioStreamRecordingWindow() { delete ui; }
 
-void AudioStreamRecordingWindow::on_recordingButton_clicked()
-{
+void AudioStreamRecordingWindow::on_recordingButton_clicked() {
     if (!recordingInProgress) {
         ui->recordingButton->setText("Stop Recording");
         ui->recordingButton->setStyleSheet(
@@ -40,8 +34,7 @@ void AudioStreamRecordingWindow::on_recordingButton_clicked()
     }
 }
 
-void AudioStreamRecordingWindow::closeEvent(QCloseEvent *event)
-{
+void AudioStreamRecordingWindow::closeEvent(QCloseEvent *event) {
     if (recordingInProgress) {
         QMessageBox::StandardButton reply;
         reply = QMessageBox::question(
