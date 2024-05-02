@@ -5,6 +5,6 @@
 int main(int argc, char *argv[]) {
     QApplication audio_to_text_convertor_app(argc, argv);
     MainWindow mainwindow;
-    mainwindow.show();
+    mainwindow.showMaximized();
     return audio_to_text_convertor_app.exec();
 }

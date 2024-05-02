@@ -9,13 +9,13 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Plugins/AudioStreamRecording/audio-stream-recording-win.cpp \
     UI/mainWindow/mainwindow.cpp \
     audio-to-text-convertor-app.cpp \
-    Plugins/AudioStreamRecording/audio-stream-recording.cpp \
     UI/AudioStreamRecordingWindow/audiostreamrecordingwindow.cpp
 
 HEADERS += \
-    Plugins/AudioStreamRecording/audio-stream-recording.hpp \
+    Plugins/AudioStreamRecording/audio-stream-recording-win.hpp \
     UI/AudioStreamRecordingWindow/audiostreamrecordingwindow.hpp \
     UI/mainWindow/mainwindow.hpp
 

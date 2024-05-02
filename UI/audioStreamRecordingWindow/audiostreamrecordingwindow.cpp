@@ -8,7 +8,7 @@ AudioStreamRecordingWindow::AudioStreamRecordingWindow(QWidget *parent)
 {
     ui->setupUi(this);
     fileName = "recorded-stream.wav";
-    record = new audioStreamRecording(fileName);
+    record = new audioStreamRecordingWin(fileName);
     recordingInProgress = false;
 }
 
@@ -24,7 +24,7 @@ void AudioStreamRecordingWindow::on_recordingButton_clicked()
         ui->recordingButton->setStyleSheet(
             "background-color: #f54242; color: #ffffff;");
 
-        recThread = std::thread(&audioStreamRecording::Record, record);
+        recThread = std::thread(&audioStreamRecordingWin::Record, record);
         recThread.detach();
 
         recordingInProgress = true;

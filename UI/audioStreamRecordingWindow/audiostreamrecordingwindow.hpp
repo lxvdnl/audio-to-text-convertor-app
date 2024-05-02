@@ -4,7 +4,7 @@
 #include <QCloseEvent>
 #include <QDialog>
 #include <QMessageBox>
-#include "../../Plugins/AudioStreamRecording/audio-stream-recording.hpp"
+#include "../../Plugins/AudioStreamRecording/audio-stream-recording-win.hpp"
 #include <thread>
 
 QT_BEGIN_NAMESPACE
@@ -28,7 +28,7 @@ private slots:
 
 private:
     Ui::AudioStreamRecordingWindow *ui;
-    audioStreamRecording *record;
+    audioStreamRecordingWin *record;
     std::thread recThread;
     std::string fileName;
     bool recordingInProgress;
