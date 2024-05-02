@@ -16,9 +16,9 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QPushButton" name="recordingButton">
+     <widget class="QPushButton" name="goToTheRecordingButton">
       <property name="text">
-       <string>Record</string>
+       <string>Go to the recording</string>
       </property>
      </widget>
     </item>

@@ -3,8 +3,8 @@
 #include "UI/mainWindow/mainwindow.hpp"
 
 int main(int argc, char *argv[]) {
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
-    return a.exec();
+    QApplication audio_to_text_convertor_app(argc, argv);
+    MainWindow mainwindow;
+    mainwindow.show();
+    return audio_to_text_convertor_app.exec();
 }
