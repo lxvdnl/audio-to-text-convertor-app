@@ -22,17 +22,15 @@ jobs:
         python-version: '3.x'
 
     - name: Install aqtinstall
-      run: |
-        python3 -m pip install aqtinstall==1.2.5
+      run: python3 -m pip install aqtinstall==1.2.5
 
-    - name: Install latest Qt
-      run: |
-        python3 -m aqt install latest linux desktop -O ${{ github.workspace }}/Qt
+    - name: Install Qt 5.15.13
+      run: python3 -m aqt install 5.15.13 linux desktop -O ${{ github.workspace }}/Qt
 
     - name: Set up Qt environment
       run: |
-        echo "$HOME/Qt/$(ls $HOME/Qt | tail -n 1)/gcc_64/bin" >> $GITHUB_PATH
-        echo "$HOME/Qt/$(ls $HOME/Qt | tail -n 1)/gcc_64/lib" >> $GITHUB_PATH
+        echo "$HOME/Qt/5.15.13/gcc_64/bin" >> $GITHUB_PATH
+        echo "$HOME/Qt/5.15.13/gcc_64/lib" >> $GITHUB_PATH
 
     - name: Install build dependencies
       run: sudo apt-get install -y qt5-qmake qtbase5-dev qtdeclarative5-dev
